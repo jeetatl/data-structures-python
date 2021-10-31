@@ -1,15 +1,15 @@
 from jeetatl.coding_lib.data_structures.tree.binary_tree_node import BinaryTreeNode
-from jeetatl.coding_lib.data_structures.tree.tree_traversal import level_order
+from jeetatl.coding_lib.data_structures.tree.tree_traversal import level_order, in_order
 
 
 class BinarySearchTree:
 
     def __init__(self):
-        self.root = BinaryTreeNode()
+        self.root = None
 
     def insert(self, value):
-        if self.root.value is None:
-            self.root.value = value
+        if self.root is None:
+            self.root = BinaryTreeNode(value)
         else:
             self._insert_helper(self.root, value)
 
@@ -59,63 +59,96 @@ class BinarySearchTree:
     @staticmethod
     def _remove(node, value):
         if value < node.value:
+
+            # value not found
             if node.left is None:
                 return
-            if value == node.left.value:    # match found
+
+            # match found
+            if value == node.left.value:
                 if BinarySearchTree._is_leaf_node(node.left):
                     node.left = None
                 elif BinarySearchTree._has_one_child_node(node.left):
-                    if node.left.left is None:
+                    if node.left.left is not None:
                         node.left = node.left.left
                     else:
                         node.left = node.left.right
                 else:
-                    parent = node.left
-                    current_predecessor = parent.right
+                    node_to_remove = node.left
+                    parent_of_current_predecessor = node_to_remove
+                    current_predecessor = node.left.right
 
                     # find predecessor
                     while current_predecessor.right is not None:
-                        parent = current_predecessor.right
-                        current_predecessor = parent.right
+                        parent_of_current_predecessor = current_predecessor
+                        current_predecessor = parent_of_current_predecessor.right
 
-                    node.value = current_predecessor.value
+                    node_to_remove.value = current_predecessor.value
 
                     if current_predecessor.left is None:
-                        parent.right = None
+                        parent_of_current_predecessor.right = None
                     else:
-                        parent.right = current_predecessor.left
+                        parent_of_current_predecessor.right = current_predecessor.left
             else:
                 BinarySearchTree._remove(node.left, value)
         elif value > node.value:
-            return
-            # if node.right is None:
-            #     return
-            # if value == node.right.value:  # match found
-            #     if BinarySearchTree._is_leaf_node(node.right):
-            #         node.right = None
-            #     elif BinarySearchTree._has_one_child_node(node.right):
-            #         if node.right.left is None:
-            #             node.right = node.right.left
-            #         else:
-            #             node.right = node.right.right
-            #     else:
-            #         parent = node.left
-            #         current_predecessor = parent.right
-            #
-            #         # find predecessor
-            #         while current_predecessor.right is not None:
-            #             parent = current_predecessor.right
-            #             current_predecessor = parent.right
-            #
-            #         node.value = current_predecessor.value
-            #
-            #         if current_predecessor.left is None:
-            #             parent.right = None
-            #         else:
-            #             parent.right = current_predecessor.left
-            # else:
-            #     BinarySearchTree._remove(node.right, value)
-        return
+
+            # value not found
+            if node.right is None:
+                return
+
+            # match found
+            if value == node.right.value:
+                if BinarySearchTree._is_leaf_node(node.right):
+                    node.right = None
+                elif BinarySearchTree._has_one_child_node(node.right):
+                    if node.right.left is not None:
+                        node.right = node.right.left
+                    else:
+                        node.right = node.right.right
+                else:
+                    node_to_remove = node.right
+                    current_predecessor = node.right.left
+
+                    if current_predecessor.right is None:
+                        node_to_remove.value = current_predecessor.value
+                        node_to_remove.left = current_predecessor.left
+                    else:
+
+                        # find predecessor
+                        parent_of_current_predecessor = None
+                        while current_predecessor.right is not None:
+                            parent_of_current_predecessor = current_predecessor
+                            current_predecessor = current_predecessor.right
+
+                        node_to_remove.value = current_predecessor.value
+                        parent_of_current_predecessor.right = current_predecessor.left
+            else:
+                BinarySearchTree._remove(node.left, value)
+        else:
+            if BinarySearchTree._is_leaf_node(node):
+                node.left = None
+            elif BinarySearchTree._has_one_child_node(node):
+                if node.left is not None:
+                    node.value = node.left.value
+                else:
+                    node.left = node.left.right
+            else:
+                node_to_remove = node
+                current_predecessor = node.left
+
+                if current_predecessor.right is None:
+                    node_to_remove.value = current_predecessor.value
+                    node_to_remove.left = current_predecessor.left
+                else:
+                    # find predecessor
+                    parent_of_current_predecessor = None
+                    while current_predecessor.right is not None:
+                        parent_of_current_predecessor = current_predecessor
+                        current_predecessor = current_predecessor.right
+
+                    node_to_remove.value = current_predecessor.value
+                    parent_of_current_predecessor.right = current_predecessor.left
 
     @staticmethod
     def _is_leaf_node(node):
@@ -125,14 +158,61 @@ class BinarySearchTree:
     def _has_one_child_node(node):
         return (node.left is None) ^ (node.right is None)
 
+    def insert_print(self, value):
+        level_order(self.root, True)
+        print('Inserting %s' % value)
+        self.insert(value)
+        level_order(self.root, True)
+        print('')
+
+    def search_print(self, value):
+        level_order(self.root, True)
+        print('Searching for %s. Found? ' % value, self.search(value))
+        level_order(self.root, True)
+        print('')
+
+    def remove_print(self, value):
+        level_order(self.root, True)
+        print('Removing %s' % value)
+        self.remove(value)
+        level_order(self.root, True)
+        print('')
+
 
 if __name__ == '__main__':
     bst = BinarySearchTree()
-    level_order(bst.root)
-    print("Search for 20: %s" % bst.search(20))
-    bst.insert(20)
-    level_order(bst.root)
-    print("Search for 20: %s" % bst.search(20))
-    bst.remove(20)
-    level_order(bst.root)
-    print("Search for 20: %s" % bst.search(20))
+    bst.search_print(20)
+    bst.insert_print(20)
+
+    print(str(bst.root))
+
+    bst.search_print(20)
+    bst.remove_print(20)
+    bst.insert_print(20)
+    bst.insert_print(10)
+    bst.insert_print(5)
+    bst.remove_print(5)
+    bst.insert_print(5)
+    bst.remove_print(10)
+    bst.search_print(10)
+    bst.search_print(5)
+
+    bst.insert_print(11)
+    bst.remove_print(5)
+
+    bst.insert_print(5)
+    bst.insert_print(15)
+
+    bst.remove_print(11)
+
+    bst.remove_print(5)
+
+    bst.insert_print(14)
+    bst.insert_print(16)
+    bst.remove_print(15)
+
+    bst.insert_print(25)
+    bst.insert_print(22)
+    bst.insert_print(27)
+
+    bst.remove_print(20)
